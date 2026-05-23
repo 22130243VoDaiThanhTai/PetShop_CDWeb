@@ -33,7 +33,7 @@ export default function Header() {
         } else {
             setUser({ isAuthenticated: false, username: '' });
         }
-    }, [location.pathname]); // <--- ĐIỂM MẤU CHỐT LÀ CHỖ NÀY
+    }, [location.pathname]);
 
     const handleLogout = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -106,13 +106,15 @@ export default function Header() {
 
                     <form className="d-flex me-4" role="search" onSubmit={handleSearch} style={{ width: '300px' }}>
                         <input className="form-control search-input" type="search" placeholder="Tìm kiếm..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                        <button className="btn btn-outline-info search-btn" type="submit">Tìm</button>
+                        {/* Đổi màu nút Tìm kiếm sang xanh lá luôn cho tone-sur-tone */}
+                        <button className="btn btn-outline-success search-btn" type="submit">Tìm</button>
                     </form>
 
                     <div className="d-flex align-items-center gap-3">
                         {user.isAuthenticated ? (
                             <div className="dropdown">
-                                <a className="nav-link dropdown-toggle fw-bold text-primary" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {/* Đổi text-primary thành text-success */}
+                                <a className="nav-link dropdown-toggle fw-bold text-success" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     {user.username}
                                 </a>
                                 <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -124,8 +126,10 @@ export default function Header() {
                             </div>
                         ) : (
                             <div className="d-flex gap-2">
-                                <Link to="/login" className="btn btn-outline-primary btn-sm px-3 rounded-pill">Đăng nhập</Link>
-                                <Link to="/register" className="btn btn-primary btn-sm px-3 rounded-pill">Đăng ký</Link>
+                                {/* Đổi btn-outline-primary thành btn-outline-success */}
+                                <Link to="/login" className="btn btn-outline-success btn-sm px-3 rounded-pill">Đăng nhập</Link>
+                                {/* Đổi btn-primary thành btn-success */}
+                                <Link to="/register" className="btn btn-success btn-sm px-3 rounded-pill">Đăng ký</Link>
                             </div>
                         )}
 
