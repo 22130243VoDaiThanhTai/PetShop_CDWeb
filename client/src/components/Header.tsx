@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// 🔴 1. Import thêm useLocation
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import petShopLogo from '../assets/Logo.png';
@@ -12,7 +11,6 @@ interface Category {
 
 export default function Header() {
     const navigate = useNavigate();
-    // 🔴 2. Khởi tạo useLocation để theo dõi sự thay đổi của trang
     const location = useLocation();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -26,16 +24,13 @@ export default function Header() {
     const [user, setUser] = useState({ isAuthenticated: false, username: '' });
     const [cartCount] = useState(3);
 
-    // 🔴 3. Sửa lại useEffect: Thêm [location.pathname] vào mảng dependency
     useEffect(() => {
-        // Mỗi khi url thay đổi (ví dụ bay từ /login sang /), đoạn code này sẽ chạy lại
         const isAuth = localStorage.getItem("isAuthenticated") === "true";
         const savedUsername = localStorage.getItem("username");
 
         if (isAuth && savedUsername) {
             setUser({ isAuthenticated: true, username: savedUsername });
         } else {
-            // Nhớ reset lại nếu không có data (phòng trường hợp user tự xóa localStorage)
             setUser({ isAuthenticated: false, username: '' });
         }
     }, [location.pathname]); // <--- ĐIỂM MẤU CHỐT LÀ CHỖ NÀY
@@ -52,14 +47,12 @@ export default function Header() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    // Đính kèm token để server biết ai đang yêu cầu đăng xuất
                     "Authorization": token ? `Bearer ${token}` : ""
                 }
             });
         } catch (error) {
             console.error("Lỗi khi đăng xuất ở server:", error);
         } finally {
-            // DÙ GỌI API THÀNH CÔNG HAY THẤT BẠI THÌ VẪN PHẢI XÓA DỮ LIỆU Ở TRÌNH DUYỆT
             localStorage.removeItem("isAuthenticated");
             localStorage.removeItem("username");
             localStorage.removeItem("accessToken"); // Xóa luôn token

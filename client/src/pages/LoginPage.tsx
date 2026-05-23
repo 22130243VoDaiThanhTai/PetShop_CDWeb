@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import LoginImage from "../assets/LoginImage.png";
 
-// Import file CSS riêng biệt để dễ bảo trì
 import "../styles/LoginPage.css";
 
 const LoginPage: React.FC = () => {
@@ -23,7 +22,6 @@ const LoginPage: React.FC = () => {
         setLoading(true);
         setBannerMsg("");
         try {
-            // Nhớ đảm bảo Spring Boot đang chạy ở cổng 8080 nhé
             const response = await fetch("http://localhost:8080/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -44,10 +42,10 @@ const LoginPage: React.FC = () => {
                     localStorage.setItem("accessToken", data.token);
                 }
 
-                // Chờ 1.5s để user thấy thông báo rồi mới chuyển hướng về trang chủ
+                // Chờ 0.5s để user thấy thông báo rồi mới chuyển hướng về trang chủ
                 setTimeout(() => {
                     navigate("/");
-                }, 1500);
+                }, 500);
             } else {
                 setBannerType("error");
                 setBannerMsg(data.message || "Tên đăng nhập hoặc mật khẩu không đúng.");

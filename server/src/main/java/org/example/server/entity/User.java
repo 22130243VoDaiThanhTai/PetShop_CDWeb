@@ -40,7 +40,6 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Ní tự generate các hàm Getter, Setter hoặc dùng @Data của thư viện Lombok cho gọn nhé
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }

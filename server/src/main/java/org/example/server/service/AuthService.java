@@ -19,7 +19,7 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
 
-    // Dùng BCrypt để băm mật khẩu cho an toàn, không ai lưu pass dạng text trần đâu nha
+    // Dùng BCrypt để băm mật khẩu cho an toàn
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public String register(RegisterRequest req) throws Exception {
@@ -68,7 +68,7 @@ public class AuthService {
             throw new Exception("Tên đăng nhập hoặc mật khẩu không đúng.");
         }
 
-        // Tạm thời trả về String. Sau này ní có thể gen JWT token ở đây để làm Auth xịn hơn
+        // Tạm thời trả về String
         return "Đăng nhập thành công";
     }
 }

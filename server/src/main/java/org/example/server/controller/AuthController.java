@@ -43,10 +43,6 @@ public class AuthController {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-
-            // 🔴 TẠI ĐÂY NÍ CÓ THỂ THÊM LOGIC BLACKLIST TOKEN:
-            // Ví dụ: tokenBlacklistService.addToBlacklist(token);
-            // Để lần sau ai dùng token này gọi API sẽ bị chặn.
         }
 
         // Trả về thông báo thành công cho Frontend

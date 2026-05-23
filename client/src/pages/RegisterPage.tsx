@@ -141,7 +141,6 @@ const RegisterPage: React.FC = () => {
         setLoading(true);
         setBannerMsg("");
         try {
-            // Sửa đường dẫn API trỏ thẳng tới Spring Boot
             const response = await fetch("http://localhost:8080/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
