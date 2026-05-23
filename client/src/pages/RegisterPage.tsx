@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Dùng Link của react-router-dom để đổi trang không bị reload
+import { Link, useNavigate } from "react-router-dom";
 import LoginImage from "../assets/LoginImage.png";
 
 // Import file CSS riêng biệt vừa tạo
@@ -101,6 +101,9 @@ const RegisterPage: React.FC = () => {
     const [loading, setLoading]         = useState(false);
     const [touched, setTouched]         = useState<Set<ErrorField>>(new Set());
 
+    // Khởi tạo hook chuyển trang
+    const navigate = useNavigate();
+
     const touch = (field: ErrorField) => setTouched((prev) => new Set(prev).add(field));
     const touchAll = () => setTouched(new Set(Object.keys(emptyErrors) as ErrorField[]));
     const showError = (field: ErrorField): string => touched.has(field) ? fieldErrors[field] : "";
@@ -138,7 +141,7 @@ const RegisterPage: React.FC = () => {
         setLoading(true);
         setBannerMsg("");
         try {
-            const response = await fetch("/api/auth/register", {
+            const response = await fetch("http://localhost:8080/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -150,7 +153,12 @@ const RegisterPage: React.FC = () => {
             const data = await response.json();
             if (response.ok) {
                 setBannerType("success");
-                setBannerMsg("Đăng ký thành công! Vui lòng đăng nhập.");
+                setBannerMsg("Đăng ký thành công! Đang chuyển hướng sang trang đăng nhập...");
+
+                // Chờ 1.5s để user thấy thông báo rồi mới chuyển hướng về trang login
+                setTimeout(() => {
+                    navigate("/login");
+                }, 1500);
             } else {
                 setBannerType("error");
                 setBannerMsg(data.message || "Đăng ký thất bại. Vui lòng thử lại.");
@@ -163,7 +171,6 @@ const RegisterPage: React.FC = () => {
         }
     };
 
-    // Hàm sinh class động dựa trên trạng thái lỗi và trạng thái focus của ô nhập liệu
     const getInputClassName = (field: ErrorField) => {
         const isError = touched.has(field) && fieldErrors[field];
         return `register-input-group ${isError ? "error" : ""} ${active[field] ? "focused" : ""}`;
