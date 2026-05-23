@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoginImage from "../assets/LoginImage.png";
 
 // Import file CSS riêng biệt để dễ bảo trì
@@ -14,13 +14,17 @@ const LoginPage: React.FC = () => {
     const [bannerType, setBannerType]         = useState<"error" | "success">("error");
     const [loading, setLoading]               = useState(false);
 
+    // Khởi tạo hook chuyển trang
+    const navigate = useNavigate();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         setLoading(true);
         setBannerMsg("");
         try {
-            const response = await fetch("/api/auth/login", {
+            // Nhớ đảm bảo Spring Boot đang chạy ở cổng 8080 nhé
+            const response = await fetch("http://localhost:8080/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
@@ -30,6 +34,20 @@ const LoginPage: React.FC = () => {
             if (response.ok) {
                 setBannerType("success");
                 setBannerMsg("Đăng nhập thành công! Đang chuyển hướng...");
+
+                // LƯU TRẠNG THÁI VÀO LOCAL STORAGE ĐỂ HEADER ĐỌC
+                localStorage.setItem("isAuthenticated", "true");
+                localStorage.setItem("username", username);
+
+                // Lưu token nếu backend có trả về JWT
+                if (data.token) {
+                    localStorage.setItem("accessToken", data.token);
+                }
+
+                // Chờ 1.5s để user thấy thông báo rồi mới chuyển hướng về trang chủ
+                setTimeout(() => {
+                    navigate("/");
+                }, 1500);
             } else {
                 setBannerType("error");
                 setBannerMsg(data.message || "Tên đăng nhập hoặc mật khẩu không đúng.");

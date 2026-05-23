@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+// 🔴 1. Import thêm useLocation
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
-// Import tài nguyên ảnh đúng chuẩn cấu trúc của bạn
 import petShopLogo from '../assets/Logo.png';
 import cartIcon from '../assets/Cart.png';
 
@@ -13,17 +12,65 @@ interface Category {
 
 export default function Header() {
     const navigate = useNavigate();
+    // 🔴 2. Khởi tạo useLocation để theo dõi sự thay đổi của trang
+    const location = useLocation();
+
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Giả định danh mục và trạng thái đăng nhập
     const [listCategory] = useState<Category[]>([
         { id: 1, name: "Thức ăn thú cưng" },
         { id: 2, name: "Đồ chơi & Phụ kiện" },
         { id: 3, name: "Chuồng & Đệm ngủ" }
     ]);
 
-    const [user] = useState({ isAuthenticated: false, username: '' });
-    const [cartCount] = useState(3); // Giả lập số lượng giỏ hàng bằng 3
+    const [user, setUser] = useState({ isAuthenticated: false, username: '' });
+    const [cartCount] = useState(3);
+
+    // 🔴 3. Sửa lại useEffect: Thêm [location.pathname] vào mảng dependency
+    useEffect(() => {
+        // Mỗi khi url thay đổi (ví dụ bay từ /login sang /), đoạn code này sẽ chạy lại
+        const isAuth = localStorage.getItem("isAuthenticated") === "true";
+        const savedUsername = localStorage.getItem("username");
+
+        if (isAuth && savedUsername) {
+            setUser({ isAuthenticated: true, username: savedUsername });
+        } else {
+            // Nhớ reset lại nếu không có data (phòng trường hợp user tự xóa localStorage)
+            setUser({ isAuthenticated: false, username: '' });
+        }
+    }, [location.pathname]); // <--- ĐIỂM MẤU CHỐT LÀ CHỖ NÀY
+
+    const handleLogout = async (e: React.MouseEvent) => {
+        e.preventDefault();
+
+        try {
+            // Lấy token hiện tại để gửi cho backend
+            const token = localStorage.getItem("accessToken");
+
+            // Gọi API đăng xuất
+            await fetch("http://localhost:8080/api/auth/logout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // Đính kèm token để server biết ai đang yêu cầu đăng xuất
+                    "Authorization": token ? `Bearer ${token}` : ""
+                }
+            });
+        } catch (error) {
+            console.error("Lỗi khi đăng xuất ở server:", error);
+        } finally {
+            // DÙ GỌI API THÀNH CÔNG HAY THẤT BẠI THÌ VẪN PHẢI XÓA DỮ LIỆU Ở TRÌNH DUYỆT
+            localStorage.removeItem("isAuthenticated");
+            localStorage.removeItem("username");
+            localStorage.removeItem("accessToken"); // Xóa luôn token
+
+            // Reset state về rỗng
+            setUser({ isAuthenticated: false, username: '' });
+
+            // Chuyển hướng về trang chủ hoặc trang đăng nhập
+            navigate("/");
+        }
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,29 +80,21 @@ export default function Header() {
     };
 
     return (
-        <nav className="navbar navbar-expand-lg bg-white fixed-top">
+        <nav className="navbar navbar-expand-lg bg-white fixed-top shadow-sm">
             <div className="container">
-                {/* Nút bấm Menu trên Mobile */}
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#petshopNavbar">
                     <span className="navbar-toggler-icon"></span>
                 </button>
 
-                {/* Logo Shop */}
                 <Link className="navbar-brand me-4" to="/">
                     <img src={petShopLogo} width="65" height="65" alt="PetShop Logo" style={{ borderRadius: '8px' }} />
                 </Link>
 
-                {/* Menu Điều hướng chính */}
                 <div className="collapse navbar-collapse" id="petshopNavbar">
                     <ul className="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
-                        <li className="nav-item">
-                            <Link className="nav-link active" to="/">Trang chủ</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/introduce">Giới thiệu</Link>
-                        </li>
+                        <li className="nav-item"><Link className="nav-link active" to="/">Trang chủ</Link></li>
+                        <li className="nav-item"><Link className="nav-link" to="/introduce">Giới thiệu</Link></li>
 
-                        {/* Dropdown Sản Phẩm */}
                         <li className="nav-item dropdown">
                             <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Sản Phẩm
@@ -69,45 +108,41 @@ export default function Header() {
                             </ul>
                         </li>
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/contact">Liên hệ</Link>
-                        </li>
+                        <li className="nav-item"><Link className="nav-link" to="/contact">Liên hệ</Link></li>
                     </ul>
 
-                    {/* Thanh Tìm Kiếm độc lập */}
                     <form className="d-flex me-4" role="search" onSubmit={handleSearch} style={{ width: '300px' }}>
-                        <input
-                            className="form-control search-input"
-                            type="search"
-                            placeholder="Tìm kiếm..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                        <input className="form-control search-input" type="search" placeholder="Tìm kiếm..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                         <button className="btn btn-outline-info search-btn" type="submit">Tìm</button>
                     </form>
 
-                    {/* Cụm chức năng Thành viên & Giỏ hàng */}
                     <div className="d-flex align-items-center gap-3">
-                        <div className="dropdown">
-                            <a className="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {user.isAuthenticated ? user.username : 'PetShop'}
-                            </a>
-                            <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                {!user.isAuthenticated ? (
-                                    <>
-                                        <li><Link className="dropdown-item" to="/login">Đăng nhập</Link></li>
-                                        <li><Link className="dropdown-item" to="/register">Đăng ký</Link></li>
-                                    </>
-                                ) : (
-                                    <li><Link className="dropdown-item" to="/logout">Đăng xuất</Link></li>
-                                )}
-                            </ul>
-                        </div>
+                        {user.isAuthenticated ? (
+                            <div className="dropdown">
+                                <a className="nav-link dropdown-toggle fw-bold text-primary" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {user.username}
+                                </a>
+                                <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><Link className="dropdown-item" to="/profile">Hồ sơ cá nhân</Link></li>
+                                    <li><Link className="dropdown-item" to="/orders">Đơn hàng</Link></li>
+                                    <li><hr className="dropdown-divider" /></li>
+                                    <li><a className="dropdown-item text-danger" href="#" onClick={handleLogout} style={{cursor: "pointer"}}>Đăng xuất</a></li>
+                                </ul>
+                            </div>
+                        ) : (
+                            <div className="d-flex gap-2">
+                                <Link to="/login" className="btn btn-outline-primary btn-sm px-3 rounded-pill">Đăng nhập</Link>
+                                <Link to="/register" className="btn btn-primary btn-sm px-3 rounded-pill">Đăng ký</Link>
+                            </div>
+                        )}
 
-                        {/* Giỏ hàng độc lập */}
-                        <Link to="/cart" className="cart-icon-container ms-2">
+                        <Link to="/cart" className="cart-icon-container ms-2 position-relative">
                             <img src={cartIcon} width="32" height="32" alt="Giỏ hàng" />
-                            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+                            {cartCount > 0 && (
+                                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.65rem' }}>
+                                    {cartCount}
+                                </span>
+                            )}
                         </Link>
                     </div>
                 </div>
