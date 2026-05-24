@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import CartPage from "./pages/CartPage";
 
 const HomePlaceholder = () => (
     <div className="container text-center" style={{ minHeight: '50vh', padding: '100px 0' }}>
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<HomePlaceholder />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/cart" element={<CartPage />} />
           </Routes>
         </main>
 
