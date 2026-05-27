@@ -57,7 +57,7 @@ export default function CategoryPage() {
         const token = localStorage.getItem("accessToken");
 
         if (!token) {
-            alert("Ní ơi, vui lòng đăng nhập để thêm sản phẩm vào giỏ nhé!");
+            alert("Vui lòng đăng nhập để thêm sản phẩm vào giỏ nhé!");
             navigate("/login");
             return;
         }
