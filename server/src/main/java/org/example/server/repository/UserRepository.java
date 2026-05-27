@@ -1,15 +1,15 @@
-package org.example.server.repository;
+    package org.example.server.repository;
 
-import org.example.server.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+    import org.example.server.entity.User;
+    import org.springframework.data.jpa.repository.JpaRepository;
+    import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+    import java.util.Optional;
 
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
+    @Repository
+    public interface UserRepository extends JpaRepository<User, Long> {
+        Optional<User> findByUsername(String username);
 
-    boolean existsByUsername(String username);
-    boolean existsByEmail(String email);
-}
+        boolean existsByUsername(String username);
+        boolean existsByEmail(String email);
+    }

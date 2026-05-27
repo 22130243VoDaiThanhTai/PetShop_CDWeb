@@ -24,9 +24,14 @@ public class AuthDtos {
     // DTO trả về chung
     public static class ApiResponse {
         public String message;
+        public String token;
 
         public ApiResponse(String message) {
             this.message = message;
+        }
+        public ApiResponse(String message, String token) {
+            this.message = message;
+            this.token = token;
         }
     }
 }

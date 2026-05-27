@@ -24,8 +24,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest req) {
         try {
-            String result = authService.login(req);
-            return ResponseEntity.ok(new ApiResponse(result));
+            String token = authService.login(req); // token lúc này chính là username
+            // Truyền token vào ApiResponse
+            return ResponseEntity.ok(new ApiResponse("Đăng nhập thành công!", token));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(e.getMessage()));
         }

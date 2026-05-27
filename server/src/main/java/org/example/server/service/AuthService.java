@@ -69,6 +69,6 @@ public class AuthService {
         }
 
         // Tạm thời trả về String
-        return "Đăng nhập thành công";
+        return user.getUsername();
     }
 }
