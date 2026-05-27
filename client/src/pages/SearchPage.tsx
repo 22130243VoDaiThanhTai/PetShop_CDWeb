@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import '../styles/SearchPage.css';
 
 interface Product {
@@ -13,8 +13,8 @@ interface Product {
 
 export default function SearchPage() {
     const location = useLocation();
+    const navigate = useNavigate();
 
-    // Lấy query string từ URL (Ví dụ: ?searched=chó -> lấy chữ "chó")
     const searchParams = new URLSearchParams(location.search);
     const keyword = searchParams.get('searched') || '';
 
@@ -29,7 +29,6 @@ export default function SearchPage() {
         }
 
         setLoading(true);
-        // Gọi API tìm kiếm của Spring Boot
         fetch(`http://localhost:8080/api/products/search?keyword=${encodeURIComponent(keyword)}`)
             .then(res => {
                 if (!res.ok) throw new Error("Lỗi khi tìm kiếm");
@@ -43,10 +42,47 @@ export default function SearchPage() {
                 console.error("Lỗi:", err);
                 setLoading(false);
             });
-    }, [keyword]); // Chạy lại mỗi khi keyword trên URL thay đổi
+    }, [keyword]);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    };
+
+    // HÀM XỬ LÝ THÊM VÀO GIỎ HÀNG
+    const handleAddToCart = (productId: number, quantity: number = 1) => {
+        const token = localStorage.getItem("accessToken");
+
+        if (!token) {
+            alert("Ní ơi, vui lòng đăng nhập để thêm sản phẩm vào giỏ nhé!");
+            navigate("/login");
+            return;
+        }
+
+        fetch("http://localhost:8080/api/cart/items", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ productId, quantity })
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+                    navigate("/login");
+                    return;
+                }
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err);
+                }
+
+                alert("Thêm vào giỏ hàng thành công! 🐾");
+                window.dispatchEvent(new Event("cartUpdated"));
+            })
+            .catch((err) => {
+                alert(err.message || "Lỗi khi thêm vào giỏ hàng");
+            });
     };
 
     return (
@@ -76,11 +112,9 @@ export default function SearchPage() {
                     {products.map(product => (
                         <div className="col" key={product.id}>
                             <div className="card h-100 border-0 shadow-sm search-product-card">
-
                                 <span className="position-absolute top-0 start-0 m-2 badge bg-warning text-dark rounded-pill shadow-sm" style={{ zIndex: 1 }}>
                                     Còn: {product.stockQuantity}
                                 </span>
-
                                 <div className="p-3 bg-light search-img-wrapper">
                                     <img
                                         src={product.imageUrl}
@@ -103,7 +137,12 @@ export default function SearchPage() {
                                                 <Link to={`/product/${product.id}`} className="btn btn-outline-success btn-sm w-100 rounded-pill fw-bold">Chi tiết</Link>
                                             </div>
                                             <div className="col-6">
-                                                <button className="btn btn-success btn-sm w-100 rounded-pill fw-bold">Thêm giỏ</button>
+                                                <button
+                                                    onClick={() => handleAddToCart(product.id, 1)}
+                                                    className="btn btn-success btn-sm w-100 rounded-pill fw-bold"
+                                                >
+                                                    Thêm giỏ
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

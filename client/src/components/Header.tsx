@@ -23,8 +23,11 @@ export default function Header() {
     ]);
 
     const [user, setUser] = useState({ isAuthenticated: false, username: '' });
-    const [cartCount] = useState(3);
 
+    // STATE LƯU SỐ LƯỢNG GIỎ HÀNG THỰC TẾ
+    const [cartCount, setCartCount] = useState<number>(0);
+
+    // XỬ LÝ AUTHENTICATION
     useEffect(() => {
         const isAuth = localStorage.getItem("isAuthenticated") === "true";
         const savedUsername = localStorage.getItem("username");
@@ -36,14 +39,48 @@ export default function Header() {
         }
     }, [location.pathname]);
 
+    // HÀM CALL API LẤY SỐ LƯỢNG GIỎ HÀNG
+    const fetchCartCount = () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            setCartCount(0);
+            return;
+        }
+
+        fetch("http://localhost:8080/api/cart", {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Chưa có giỏ hàng");
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) {
+                    // Đếm tổng TẤT CẢ sản phẩm (cộng dồn quantity)
+                    const totalQuantity = data.reduce((sum, item) => sum + item.quantity, 0);
+                    setCartCount(totalQuantity);
+                }
+            })
+            .catch(() => setCartCount(0));
+    };
+
+    // LẮNG NGHE TÍN HIỆU CẬP NHẬT GIỎ HÀNG HOẶC KHI CHUYỂN TRANG
+    useEffect(() => {
+        fetchCartCount();
+
+        // Lắng nghe tín hiệu khi user bấm "Thêm vào giỏ"
+        window.addEventListener("cartUpdated", fetchCartCount);
+
+        // Dọn dẹp listener
+        return () => window.removeEventListener("cartUpdated", fetchCartCount);
+    }, [location.pathname]); // Update lại giỏ khi đổi đường dẫn (đặc biệt sau khi Login/Logout)
+
     const handleLogout = async (e: React.MouseEvent) => {
         e.preventDefault();
 
         try {
-            // Lấy token hiện tại để gửi cho backend
             const token = localStorage.getItem("accessToken");
 
-            // Gọi API đăng xuất
             await fetch("http://localhost:8080/api/auth/logout", {
                 method: "POST",
                 headers: {
@@ -56,12 +93,12 @@ export default function Header() {
         } finally {
             localStorage.removeItem("isAuthenticated");
             localStorage.removeItem("username");
-            localStorage.removeItem("accessToken"); // Xóa luôn token
+            localStorage.removeItem("accessToken");
 
-            // Reset state về rỗng
+            // Reset state
             setUser({ isAuthenticated: false, username: '' });
+            setCartCount(0); // Đăng xuất thì reset giỏ hàng về 0 lập tức
 
-            // Chuyển hướng về trang chủ hoặc trang đăng nhập
             navigate("/");
         }
     };
@@ -107,14 +144,12 @@ export default function Header() {
 
                     <form className="d-flex me-4" role="search" onSubmit={handleSearch} style={{ width: '300px' }}>
                         <input className="form-control search-input" type="search" placeholder="Tìm kiếm..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                        {/* Đổi màu nút Tìm kiếm sang xanh lá luôn cho tone-sur-tone */}
                         <button className="btn btn-outline-success search-btn" type="submit">Tìm</button>
                     </form>
 
                     <div className="d-flex align-items-center gap-3">
                         {user.isAuthenticated ? (
                             <div className="dropdown">
-                                {/* Đổi text-primary thành text-success */}
                                 <a className="nav-link dropdown-toggle fw-bold text-success" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     {user.username}
                                 </a>
@@ -127,15 +162,14 @@ export default function Header() {
                             </div>
                         ) : (
                             <div className="d-flex gap-2">
-                                {/* Đổi btn-outline-primary thành btn-outline-success */}
                                 <Link to="/login" className="btn btn-outline-success btn-sm px-3 rounded-pill">Đăng nhập</Link>
-                                {/* Đổi btn-primary thành btn-success */}
                                 <Link to="/register" className="btn btn-success btn-sm px-3 rounded-pill">Đăng ký</Link>
                             </div>
                         )}
 
                         <Link to="/cart" className="cart-icon-container ms-2 position-relative">
                             <img src={cartIcon} width="32" height="32" alt="Giỏ hàng" />
+                            {/* Nếu cartCount > 0 mới hiển thị cục thông báo đỏ đỏ */}
                             {cartCount > 0 && (
                                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.65rem' }}>
                                     {cartCount}
