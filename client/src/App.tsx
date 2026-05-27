@@ -8,6 +8,7 @@ import RegisterPage from "./pages/RegisterPage";
 import CartPage from "./pages/CartPage";
 import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import SearchPage from './pages/SearchPage';
 
 const HomePlaceholder = () => (
     <div className="container text-center" style={{ minHeight: '50vh', padding: '100px 0' }}>
@@ -31,6 +32,7 @@ function App() {
             <Route path="/cart" element={<CartPage />} />
               <Route path="/category/:id" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
+              <Route path="/search" element={<SearchPage />} />
 
           </Routes>
         </main>
