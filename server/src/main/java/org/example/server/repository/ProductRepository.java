@@ -12,4 +12,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findTop4ByOrderByIdDesc();
     // Lấy danh sách sản phẩm theo mã Danh mục
     List<Product> findByCategoryId(Long categoryId);
+    // Tìm kiếm sản phẩm theo tên (chứa từ khóa, không phân biệt hoa thường)
+    List<Product> findByNameContainingIgnoreCase(String keyword);
 }
