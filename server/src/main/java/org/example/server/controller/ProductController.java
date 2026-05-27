@@ -33,4 +33,12 @@ public class ProductController {
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Long categoryId) {
         return ResponseEntity.ok(productRepository.findByCategoryId(categoryId));
     }
+    // API lấy chi tiết 1 sản phẩm theo ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findById(id)
+                .map(product -> ResponseEntity.ok(product))
+                .orElse(ResponseEntity.notFound().build());
+        // Nếu không tìm thấy ID sản phẩm, trả về lỗi 404 Not Found
+    }
 }
