@@ -25,7 +25,7 @@ export default function Footer() {
                             {React.createElement(FaEnvelope as any, { className: "text-dark" })}
                             <span>
                                 <strong>Email:</strong>{' '}
-                                <a href="mailto:MixiShop@gmail.com" className="text-dark text-decoration-none">MixiShop@gmail.com</a>
+                                <a href="mailto:PetShop@gmail.com" className="text-dark text-decoration-none">PetShop@gmail.com</a>
                             </span>
                         </div>
                     </div>

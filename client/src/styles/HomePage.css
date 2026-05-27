@@ -1,0 +1,73 @@
+/* Custom styles cho trang chủ */
+.hero-banner {
+    background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
+    border-radius: 12px;
+    padding: 40px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-icon-box {
+    text-align: center;
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.feature-icon-box:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon-box i {
+    font-size: 2.5rem;
+    color: #56ab2f;
+    margin-bottom: 15px;
+}
+
+.middle-banner {
+    background-color: #28a745;
+    border-radius: 12px;
+    color: white;
+}
+
+.testimonial-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.testimonial-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: -50px auto 15px;
+    border: 4px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.product-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 12px;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.bottom-banner {
+    background-color: #e8f5e9;
+    border: 2px dashed #4caf50;
+    border-radius: 12px;
+}
+.hover-zoom {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-zoom:hover {
+    transform: scale(1.015);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+}
