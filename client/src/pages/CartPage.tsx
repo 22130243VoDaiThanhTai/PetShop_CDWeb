@@ -1,26 +1,61 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/CartPage.css";
 
 interface CartItem {
-    id: number;
+    id: number;        // ID của dòng cart_item
+    productId: number; // ID của sản phẩm để click xem chi tiết
     name: string;
     image: string;
     price: number;
     quantity: number;
 }
 
-const INITIAL_ITEMS: CartItem[] = [
-    { id: 1, name: "Thức ăn hạt Royal Canin cho mèo 2kg", image: "", price: 285000, quantity: 2 },
-    { id: 2, name: "Đồ chơi cần câu lông vũ cho mèo",     image: "", price:  45000, quantity: 1 },
-    { id: 3, name: "Chuồng chó inox gấp gọn size M",      image: "", price: 650000, quantity: 1 },
-];
-
 const formatVND = (amount: number) =>
     amount.toLocaleString("vi-VN") + " VNĐ";
 
 const CartPage: React.FC = () => {
-    const [items, setItems]           = useState<CartItem[]>(INITIAL_ITEMS);
+    const navigate = useNavigate();
+    const [items, setItems] = useState<CartItem[]>([]);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [loading, setLoading] = useState<boolean>(true);
+    const [errorMsg, setErrorMsg] = useState<string>("");
+
+    // Lấy Token của user từ localStorage để gửi kèm trong Header Request
+    const token = localStorage.getItem("accessToken");
+
+    // 1. Fetch dữ liệu giỏ hàng thật từ Backend lên
+    const fetchCartData = () => {
+        if (!token) {
+            setErrorMsg("Vui lòng đăng nhập để xem giỏ hàng của bạn nhé!");
+            setLoading(false);
+            return;
+        }
+
+        fetch("http://localhost:8080/api/cart", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then((res) => {
+                if (res.status === 401) throw new Error("Hết phiên đăng nhập!");
+                if (!res.ok) throw new Error("Không thể tải dữ liệu giỏ hàng");
+                return res.json();
+            })
+            .then((data: CartItem[]) => {
+                setItems(data);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error(err);
+                setErrorMsg(err.message || "Đã xảy ra lỗi hệ thống.");
+                setLoading(false);
+            });
+    };
+
+    useEffect(() => {
+        fetchCartData();
+    }, []);
 
     const isAllSelected = items.length > 0 && selectedIds.size === items.length;
     const isIndeterminate = selectedIds.size > 0 && selectedIds.size < items.length;
@@ -41,7 +76,9 @@ const CartPage: React.FC = () => {
         });
     };
 
+    // 2. Tăng giảm số lượng đồng bộ xuống DB
     const changeQty = (id: number, delta: number) => {
+        // Cập nhật nhanh local state trước để UI chạy mượt (Optimistic Update)
         setItems((prev) =>
             prev.map((item) =>
                 item.id === id
@@ -49,38 +86,113 @@ const CartPage: React.FC = () => {
                     : item
             )
         );
+
+        fetch(`http://localhost:8080/api/cart/items/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ delta })
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    // Nếu lỗi (ví dụ: quá số lượng trong kho), reload lại data thực tế
+                    fetchCartData();
+                    res.text().then(text => alert(text));
+                }
+            })
+            .catch((err) => console.error("Lỗi cập nhật số lượng:", err));
     };
 
+    // 3. Xóa một sản phẩm đơn lẻ khỏi giỏ hàng
     const removeItem = (id: number) => {
-        setItems((prev) => prev.filter((item) => item.id !== id));
-        setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+        if (!window.confirm("Ní có chắc muốn xóa sản phẩm này khỏi giỏ hàng không?")) return;
+
+        fetch(`http://localhost:8080/api/cart/items/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then((res) => {
+                if (res.ok) {
+                    setItems((prev) => prev.filter((item) => item.id !== id));
+                    setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(id);
+                        return next;
+                    });
+                }
+            })
+            .catch((err) => console.error("Lỗi khi xóa sản phẩm:", err));
     };
 
+    // 4. Xóa hàng loạt các sản phẩm đã chọn bằng Checkbox
     const removeSelected = () => {
-        setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
-        setSelectedIds(new Set());
+        if (!window.confirm(`Ní chắc chắn muốn xóa ${selectedIds.size} mục đã chọn chứ?`)) return;
+
+        const idsArray = Array.from(selectedIds);
+
+        fetch("http://localhost:8080/api/cart/items/remove-multiple", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(idsArray)
+        })
+            .then((res) => {
+                if (res.ok) {
+                    setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
+                    setSelectedIds(new Set());
+                }
+            })
+            .catch((err) => console.error("Lỗi khi xóa nhiều sản phẩm:", err));
     };
 
-    const selectedItems   = items.filter((i) => selectedIds.has(i.id));
-    const selectedQty     = selectedItems.reduce((sum, i) => sum + i.quantity, 0);
-    const selectedAmount  = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const selectedItems = items.filter((i) => selectedIds.has(i.id));
+    const selectedQty = selectedItems.reduce((sum, i) => sum + i.quantity, 0);
+    const selectedAmount = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
     const handleBuy = () => {
-        // TODO: navigate("/checkout") với danh sách selectedIds
+        // Điều hướng sang trang thanh toán cùng danh sách các mã mặt hàng đã chọn mua
         alert(`Tiến hành thanh toán ${selectedQty} sản phẩm — ${formatVND(selectedAmount)}`);
+        navigate("/checkout", { state: { selectedItems } });
     };
 
     const handlePrint = () => window.print();
 
+    if (loading) {
+        return (
+            <div className="cart-page d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+                <div className="spinner-border text-success" role="status"></div>
+                <span className="ms-2 fw-bold text-muted">Đang tải giỏ hàng của ní...</span>
+            </div>
+        );
+    }
+
+    if (errorMsg) {
+        return (
+            <div className="cart-page">
+                <div className="cart-container text-center py-5 bg-white rounded shadow-sm">
+                    <h4 className="text-warning fw-bold mb-3">⚠️ Thông báo</h4>
+                    <p className="text-muted">{errorMsg}</p>
+                    <button onClick={() => navigate("/login")} className="btn btn-success rounded-pill px-4 mt-2">Đăng nhập ngay</button>
+                </div>
+            </div>
+        );
+    }
+
     const isEmpty = items.length === 0;
 
     return (
-        <div className="cart-page">
+        <div className="cart-page" style={{ marginTop: "80px" }}>
             <div className="cart-container">
-
                 <a href="/" className="cart-continue-btn print-hide">
                     ← Tiếp tục mua hàng
                 </a>
+
                 {isEmpty ? (
                     <div className="cart-empty-wrapper">
                         <p className="cart-empty-title">Chưa có đơn hàng</p>
@@ -100,9 +212,8 @@ const CartPage: React.FC = () => {
                             <tr>
                                 <th className="cart-checkbox-col print-hide">
                                     <input type="checkbox" className="cart-checkbox" checked={isAllSelected}
-                                        ref={(el) => {
-                                            if (el) el.indeterminate = isIndeterminate;
-                                        }} onChange={toggleSelectAll} title="Chọn tất cả"/>
+                                           ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
+                                           onChange={toggleSelectAll} title="Chọn tất cả" />
                                 </th>
                                 <th>Sản phẩm</th>
                                 <th>Đơn giá</th>
@@ -117,16 +228,18 @@ const CartPage: React.FC = () => {
                                 return (
                                     <tr key={item.id} className={isSelected ? "cart-row-selected" : ""}>
                                         <td className="cart-checkbox-col print-hide">
-                                            <input type="checkbox" className="cart-checkbox" checked={isSelected} onChange={() => toggleSelectOne(item.id)}/>
+                                            <input type="checkbox" className="cart-checkbox" checked={isSelected} onChange={() => toggleSelectOne(item.id)} />
                                         </td>
                                         <td>
                                             <div className="cart-product-cell">
                                                 {item.image ? (
-                                                    <img src={item.image} alt={item.name} className="cart-product-img"/>
+                                                    <img src={item.image} alt={item.name} className="cart-product-img" />
                                                 ) : (
                                                     <div className="cart-product-img-placeholder">🐾</div>
                                                 )}
-                                                <span className="cart-product-name">{item.name}</span>
+                                                <span className="cart-product-name" style={{ cursor: "pointer" }} onClick={() => navigate(`/product/${item.productId}`)}>
+                                                        {item.name}
+                                                    </span>
                                             </div>
                                         </td>
                                         <td>
@@ -165,19 +278,18 @@ const CartPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
             {!isEmpty && (
                 <div className="cart-bottom-bar print-hide">
                     <div className="cart-bottom-inner">
                         <div className="cart-bottom-left">
                             <label className="cart-bottom-select-all">
                                 <input type="checkbox" className="cart-checkbox" checked={isAllSelected}
-                                    ref={(el) => {
-                                        if (el) el.indeterminate = isIndeterminate;
-                                    }} onChange={toggleSelectAll}/>
+                                       ref={(el) => { if (el) el.indeterminate = isIndeterminate; }} onChange={toggleSelectAll} />
                                 Chọn tất cả ({items.length})
                             </label>
                             <button className="cart-bottom-delete" onClick={removeSelected} disabled={selectedIds.size === 0}>
-                                Xóa tất cả
+                                Xóa phần đã chọn
                             </button>
                             <button className="cart-bottom-delete" onClick={handlePrint}>
                                 🖨️ In hóa đơn
