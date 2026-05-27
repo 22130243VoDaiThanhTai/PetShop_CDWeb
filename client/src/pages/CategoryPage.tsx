@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import '../styles/CategoryPage.css';
 
 interface Product {
@@ -13,8 +13,8 @@ interface Product {
 }
 
 export default function CategoryPage() {
-    // Lấy tham số 'id' từ đường dẫn (ví dụ: /category/1 -> id = "1")
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
 
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -23,13 +23,11 @@ export default function CategoryPage() {
     useEffect(() => {
         setLoading(true);
 
-        // Xác định tên danh mục để hiển thị lên tiêu đề
         if (id === '1') setCategoryName("Thức Ăn Thú Cưng");
         else if (id === '2') setCategoryName("Đồ Chơi & Phụ Kiện");
         else if (id === '3') setCategoryName("Chuồng & Đệm Ngủ");
         else setCategoryName("Tất Cả Sản Phẩm");
 
-        // Nếu id = 4 (All) thì gọi API lấy tất cả, ngược lại gọi theo category
         const apiUrl = (id === '4' || !id)
             ? 'http://localhost:8080/api/products'
             : `http://localhost:8080/api/products/category/${id}`;
@@ -48,15 +46,51 @@ export default function CategoryPage() {
                 setLoading(false);
             });
 
-    }, [id]); // Chạy lại mỗi khi đổi danh mục trên Header
+    }, [id]);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
 
+    // HÀM XỬ LÝ THÊM VÀO GIỎ HÀNG
+    const handleAddToCart = (productId: number, quantity: number = 1) => {
+        const token = localStorage.getItem("accessToken");
+
+        if (!token) {
+            alert("Ní ơi, vui lòng đăng nhập để thêm sản phẩm vào giỏ nhé!");
+            navigate("/login");
+            return;
+        }
+
+        fetch("http://localhost:8080/api/cart/items", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ productId, quantity })
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+                    navigate("/login");
+                    return;
+                }
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err);
+                }
+
+                alert("Thêm vào giỏ hàng thành công! 🐾");
+                window.dispatchEvent(new Event("cartUpdated"));
+            })
+            .catch((err) => {
+                alert(err.message || "Lỗi khi thêm vào giỏ hàng");
+            });
+    };
+
     return (
         <div className="container category-page-container">
-            {/* Header của trang danh mục */}
             <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                 <h2 className="fw-bold text-success m-0">🐾 {categoryName}</h2>
                 <span className="text-muted fw-bold">{products.length} sản phẩm</span>
@@ -76,12 +110,9 @@ export default function CategoryPage() {
                     {products.map(product => (
                         <div className="col" key={product.id}>
                             <div className="card h-100 border-0 shadow-sm product-card">
-
-                                {/* Badge số lượng tồn kho */}
                                 <span className="position-absolute top-0 start-0 m-2 badge bg-warning text-dark rounded-pill shadow-sm" style={{ zIndex: 1 }}>
                                     Còn: {product.stockQuantity}
                                 </span>
-
                                 <div className="p-3 bg-light product-img-wrapper">
                                     <img
                                         src={product.imageUrl}
@@ -104,7 +135,12 @@ export default function CategoryPage() {
                                                 <Link to={`/product/${product.id}`} className="btn btn-outline-success btn-sm w-100 rounded-pill fw-bold">Chi tiết</Link>
                                             </div>
                                             <div className="col-6">
-                                                <button className="btn btn-success btn-sm w-100 rounded-pill fw-bold">Thêm giỏ</button>
+                                                <button
+                                                    onClick={() => handleAddToCart(product.id, 1)}
+                                                    className="btn btn-success btn-sm w-100 rounded-pill fw-bold"
+                                                >
+                                                    Thêm giỏ
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

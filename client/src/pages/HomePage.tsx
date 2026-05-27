@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/HomePage.css';
 
 import banner1 from '../assets/banner1.png';
@@ -17,8 +17,8 @@ interface Product {
 export default function HomePage() {
     const [hotProducts, setHotProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
-    // Gọi API lấy 4 sản phẩm nổi bật
     useEffect(() => {
         fetch('http://localhost:8080/api/products/featured')
             .then(res => res.json())
@@ -36,21 +36,51 @@ export default function HomePage() {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     };
 
+    // HÀM XỬ LÝ THÊM VÀO GIỎ HÀNG
+    const handleAddToCart = (productId: number, quantity: number = 1) => {
+        const token = localStorage.getItem("accessToken");
+
+        if (!token) {
+            alert("Ní ơi, vui lòng đăng nhập để thêm sản phẩm vào giỏ nhé!");
+            navigate("/login");
+            return;
+        }
+
+        fetch("http://localhost:8080/api/cart/items", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ productId, quantity })
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+                    navigate("/login");
+                    return;
+                }
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err);
+                }
+
+                alert("Thêm vào giỏ hàng thành công! 🐾");
+                window.dispatchEvent(new Event("cartUpdated"));
+            })
+            .catch((err) => {
+                alert(err.message || "Lỗi khi thêm vào giỏ hàng");
+            });
+    };
+
     return (
         <div style={{ marginTop: '90px' }}>
-
-            {/* 1. HERO BANNER (Dùng ảnh banner1) */}
             <div className="container mb-5">
                 <Link to="/category/4">
-                    <img
-                        src={banner1}
-                        alt="New Arrival"
-                        className="img-fluid w-100 rounded shadow-sm hover-zoom"
-                    />
+                    <img src={banner1} alt="New Arrival" className="img-fluid w-100 rounded shadow-sm hover-zoom" />
                 </Link>
             </div>
 
-            {/* 2. FEATURE ICONS */}
             <div className="container mb-5 border-bottom pb-4">
                 <div className="row text-center">
                     <div className="col-6 col-md-3 feature-icon-box">
@@ -76,7 +106,6 @@ export default function HomePage() {
                 </div>
             </div>
 
-            {/* 3. HÀNG HOT 🔥 (Sản phẩm nổi bật) */}
             <div className="container mb-5">
                 <div className="text-center mb-4">
                     <h2 className="fw-bold text-uppercase">HÀNG HOT 🔥</h2>
@@ -99,7 +128,12 @@ export default function HomePage() {
                                         </h6>
                                         <div className="mt-auto">
                                             <h5 className="text-danger fw-bold mb-3">{formatPrice(product.price)}</h5>
-                                            <button className="btn btn-outline-success w-100 rounded-pill btn-sm fw-bold">Thêm vào giỏ</button>
+                                            <button
+                                                onClick={() => handleAddToCart(product.id, 1)}
+                                                className="btn btn-outline-success w-100 rounded-pill btn-sm fw-bold"
+                                            >
+                                                Thêm vào giỏ
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -109,18 +143,12 @@ export default function HomePage() {
                 )}
             </div>
 
-            {/* 4. MIDDLE BANNER (Dùng ảnh banner2) */}
             <div className="container mb-5">
                 <Link to="category/4">
-                    <img
-                        src={banner2}
-                        alt="Sale up to 60%"
-                        className="img-fluid w-100 rounded shadow-sm hover-zoom"
-                    />
+                    <img src={banner2} alt="Sale up to 60%" className="img-fluid w-100 rounded shadow-sm hover-zoom" />
                 </Link>
             </div>
 
-            {/* 5. TESTIMONIALS (KHÁCH HÀNG ĐÃ NÓI GÌ) */}
             <div className="container mb-5 pt-5">
                 <h3 className="text-center fw-bold mb-5">Khách hàng đã nói gì</h3>
                 <div className="row g-4 mt-3">
@@ -151,17 +179,11 @@ export default function HomePage() {
                 </div>
             </div>
 
-            {/* 6. BOTTOM BANNER (Dùng ảnh banner3) */}
             <div className="container mb-5">
                 <Link to="/register">
-                    <img
-                        src={banner3}
-                        alt="Cùng mua sắm đơn hàng đầu tiên nhé"
-                        className="img-fluid w-100 rounded shadow-sm hover-zoom"
-                    />
+                    <img src={banner3} alt="Cùng mua sắm đơn hàng đầu tiên nhé" className="img-fluid w-100 rounded shadow-sm hover-zoom" />
                 </Link>
             </div>
-
         </div>
     );
 }

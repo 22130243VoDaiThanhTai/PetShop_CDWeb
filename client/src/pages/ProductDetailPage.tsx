@@ -13,12 +13,12 @@ interface Product {
 }
 
 export default function ProductDetailPage() {
-    const { id } = useParams<{ id: string }>(); // Lấy ID sản phẩm trên thanh URL
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
-    const [quantity, setQuantity] = useState(1); // State quản lý số lượng đặt mua
+    const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
         setLoading(true);
@@ -37,14 +37,12 @@ export default function ProductDetailPage() {
             });
     }, [id]);
 
-    // Hàm tăng số lượng mua
     const handleIncrease = () => {
         if (product && quantity < product.stockQuantity) {
             setQuantity(prev => prev + 1);
         }
     };
 
-    // Hàm giảm số lượng mua
     const handleDecrease = () => {
         if (quantity > 1) {
             setQuantity(prev => prev - 1);
@@ -53,6 +51,43 @@ export default function ProductDetailPage() {
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    };
+
+    // HÀM XỬ LÝ THÊM VÀO GIỎ HÀNG
+    const handleAddToCart = (productId: number, qty: number) => {
+        const token = localStorage.getItem("accessToken");
+
+        if (!token) {
+            alert("Ní ơi, vui lòng đăng nhập để thêm sản phẩm vào giỏ nhé!");
+            navigate("/login");
+            return;
+        }
+
+        fetch("http://localhost:8080/api/cart/items", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ productId, quantity: qty })
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+                    navigate("/login");
+                    return;
+                }
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err);
+                }
+
+                alert("Thêm vào giỏ hàng thành công! 🐾");
+                window.dispatchEvent(new Event("cartUpdated"));
+            })
+            .catch((err) => {
+                alert(err.message || "Lỗi khi thêm vào giỏ hàng");
+            });
     };
 
     if (loading) {
@@ -75,7 +110,6 @@ export default function ProductDetailPage() {
 
     return (
         <div className="container product-detail-container">
-            {/* Breadcrumb dẫn đường xinh xắn */}
             <nav aria-label="breadcrumb" className="mb-4">
                 <ol className="breadcrumb">
                     <li className="breadcrumb-item"><Link to="/" className="text-decoration-none text-muted">Trang chủ</Link></li>
@@ -85,7 +119,6 @@ export default function ProductDetailPage() {
             </nav>
 
             <div className="row g-5">
-                {/* BÊN TRÁI: HÌNH ẢNH SẢN PHẨM */}
                 <div className="col-12 col-md-6">
                     <div className="detail-img-wrapper">
                         <img
@@ -97,12 +130,9 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
 
-                {/* BÊN PHẢI: THÔNG TIN CHI TIẾT */}
                 <div className="col-12 col-md-6 d-flex flex-column justify-content-between">
                     <div>
                         <h1 className="fw-bold mb-3 h2">{product.name}</h1>
-
-                        {/* Tình trạng kho hàng */}
                         <div className="mb-4">
                             {product.stockQuantity > 0 ? (
                                 <span className="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill fw-bold">
@@ -114,22 +144,16 @@ export default function ProductDetailPage() {
                                 </span>
                             )}
                         </div>
-
-                        {/* Giá tiền */}
                         <h2 className="text-danger fw-bold mb-4 display-6">
                             {formatPrice(product.price)}
                         </h2>
-
                         <hr />
-
-                        {/* Mô tả ngắn */}
                         <h6 className="fw-bold text-uppercase text-muted mb-2">Mô tả sản phẩm:</h6>
                         <p className="text-secondary lh-lg mb-4" style={{ whiteSpace: 'pre-line' }}>
                             {product.description || "Chưa có mô tả chi tiết cho sản phẩm này."}
                         </p>
                     </div>
 
-                    {/* HÀNH ĐỘNG: CHỌN SỐ LƯỢNG & MUA HÀNG */}
                     <div className="mt-4">
                         {product.stockQuantity > 0 && (
                             <div className="d-flex align-items-center gap-3 mb-4">
@@ -147,6 +171,7 @@ export default function ProductDetailPage() {
                                 <button
                                     className="btn btn-success btn-lg w-100 rounded-pill fw-bold py-3"
                                     disabled={product.stockQuantity <= 0}
+                                    onClick={() => handleAddToCart(product.id, quantity)}
                                 >
                                     🛒 THÊM VÀO GIỎ HÀNG
                                 </button>
@@ -162,7 +187,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
 
-                        {/* Khung cam kết an tâm cho khách hàng */}
                         <div className="policy-box">
                             <div className="row text-center text-sm-start g-2">
                                 <div className="col-12 col-sm-6 small text-success fw-bold">🛡️ Cam kết 100% chính hãng</div>
@@ -172,7 +196,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
