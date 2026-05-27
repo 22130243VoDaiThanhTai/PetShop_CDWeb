@@ -10,4 +10,6 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     // Lấy 4 sản phẩm đầu tiên để làm "Hàng Hot" trên trang chủ
     List<Product> findTop4ByOrderByIdDesc();
+    // Lấy danh sách sản phẩm theo mã Danh mục
+    List<Product> findByCategoryId(Long categoryId);
 }

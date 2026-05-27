@@ -18,7 +18,8 @@ export default function Header() {
     const [listCategory] = useState<Category[]>([
         { id: 1, name: "Thức ăn thú cưng" },
         { id: 2, name: "Đồ chơi & Phụ kiện" },
-        { id: 3, name: "Chuồng & Đệm ngủ" }
+        { id: 3, name: "Chuồng & Đệm ngủ" },
+        { id: 4, name: "All" }
     ]);
 
     const [user, setUser] = useState({ isAuthenticated: false, username: '' });
