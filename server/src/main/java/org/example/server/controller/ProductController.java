@@ -41,4 +41,10 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
         // Nếu không tìm thấy ID sản phẩm, trả về lỗi 404 Not Found
     }
+    // API tìm kiếm sản phẩm
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam("keyword") String keyword) {
+        List<Product> results = productRepository.findByNameContainingIgnoreCase(keyword);
+        return ResponseEntity.ok(results);
+    }
 }
