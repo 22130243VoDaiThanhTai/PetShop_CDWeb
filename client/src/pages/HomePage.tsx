@@ -41,7 +41,7 @@ export default function HomePage() {
 
             {/* 1. HERO BANNER (Dùng ảnh banner1) */}
             <div className="container mb-5">
-                <Link to="/products">
+                <Link to="/category/4">
                     <img
                         src={banner1}
                         alt="New Arrival"
@@ -111,7 +111,7 @@ export default function HomePage() {
 
             {/* 4. MIDDLE BANNER (Dùng ảnh banner2) */}
             <div className="container mb-5">
-                <Link to="/sale">
+                <Link to="category/4">
                     <img
                         src={banner2}
                         alt="Sale up to 60%"
