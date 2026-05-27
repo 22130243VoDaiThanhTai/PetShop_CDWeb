@@ -25,16 +25,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 2. Cho phép các API này gọi tự do không cần Token
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/products/**").permitAll() // Thêm dòng này để cấp quyền cho API sản phẩm
+                        .requestMatchers("/api/products/**").permitAll() // Cấp quyền cho API sản phẩm
+                        .requestMatchers("/api/cart/**").permitAll()    // THÊM DÒNG NÀY: Cấp quyền tự do cho API giỏ hàng
 
-                        // Các API khác bắt buộc phải đăng nhập
+                        // Các API khác bắt buộc phải đăng nhập ở mức Spring Security
                         .anyRequest().authenticated()
                 );
 
         return http.build();
     }
 
-    // 3. Cấu hình chi tiết cho CORS để cho phép port 3000 (React) gọi vào
+    // 3. Cấu hình chi tiết cho CORS để cho phép port 3000 (React) hoặc 5173 (Vite) gọi vào
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
