@@ -30,7 +30,7 @@ public class ProductController {
 
     // API lấy sản phẩm theo Category ID (Dùng cho ID = 1, 2, 3)
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Long categoryId) {
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Integer categoryId) {
         return ResponseEntity.ok(productRepository.findByCategoryId(categoryId));
     }
     // API lấy chi tiết 1 sản phẩm theo ID

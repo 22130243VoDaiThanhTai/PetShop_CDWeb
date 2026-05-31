@@ -25,10 +25,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 2. Cho phép các API này gọi tự do không cần Token
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/products/**").permitAll() // Cấp quyền cho API sản phẩm
-                        .requestMatchers("/api/cart/**").permitAll()    // THÊM DÒNG NÀY: Cấp quyền tự do cho API giỏ hàng
+                        .requestMatchers("/api/products/**").permitAll()
+                        .requestMatchers("/api/cart/**").permitAll()
+                        .requestMatchers("/api/shipping/**").permitAll()
 
-                        // Các API khác bắt buộc phải đăng nhập ở mức Spring Security
                         .anyRequest().authenticated()
                 );
 
