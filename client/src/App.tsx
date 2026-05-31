@@ -9,6 +9,9 @@ import CartPage from "./pages/CartPage";
 import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import SearchPage from './pages/SearchPage';
+import CheckoutPage from './pages/Checkoutpage';
+
+
 
 const HomePlaceholder = () => (
     <div className="container text-center" style={{ minHeight: '50vh', padding: '100px 0' }}>
@@ -33,7 +36,7 @@ function App() {
               <Route path="/category/:id" element={<CategoryPage />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/search" element={<SearchPage />} />
-
+              <Route path="/checkout" element={<CheckoutPage />} />
           </Routes>
         </main>
 
